@@ -64,6 +64,8 @@ export function GameCanvas({ onDeath, onStart }: GameCanvasProps) {
   const handleStart = useCallback(() => {
     stateRef.current = startGame(stateRef.current)
     setGameStatus('playing')
+    // Consume the dash input from the start/restart click so it doesn't fire a dash
+    inputRef.current?.getState()
     onStart()
     rafRef.current = requestAnimationFrame(gameLoop)
   }, [gameLoop, onStart])

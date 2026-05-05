@@ -9,6 +9,7 @@ import { TIMER_START, PLAYER_RADIUS, ENEMY_KILL_RADIUS, GRACE_PERIOD, DASH_COOLD
 let nextEnemyId = 0
 let spawnAccumulator = 0
 let dashCooldown = 0
+let scarGraceFrames = 0  // frames to skip scar collision after dash (avoid self-kill)
 
 export function createGameState(highScore: number): GameState {
   return {
@@ -28,6 +29,7 @@ export function startGame(state: GameState): GameState {
   nextEnemyId = 0
   spawnAccumulator = 0
   dashCooldown = 0
+  scarGraceFrames = 0
   return {
     ...state,
     status: 'playing',
@@ -71,6 +73,7 @@ export function tick(state: GameState, input: InputState): GameState {
     // Dash just completed — create scar and check kills
     if (wasDashing && !newState.player.isDashing && newState.player.dashStart && newState.player.dashEnd) {
       newState.scars = [...newState.scars, createScar(newState.player.dashStart, newState.player.dashEnd)]
+      scarGraceFrames = 5  // brief invulnerability to own scar after dash
 
       const killed = checkDashKills(
         newState.player.dashStart,
@@ -91,8 +94,10 @@ export function tick(state: GameState, input: InputState): GameState {
     newState.player = movePlayer(newState.player, input)
   }
 
-  // Check scar collision (skip during dash)
-  if (!newState.player.isDashing && newState.scars.length > 0) {
+  // Check scar collision (skip during dash and brief grace after dash)
+  if (scarGraceFrames > 0) {
+    scarGraceFrames--
+  } else if (!newState.player.isDashing && newState.scars.length > 0) {
     if (checkScarCollision(newState.player.position, PLAYER_RADIUS, newState.scars)) {
       return { ...newState, status: 'dead' }
     }
