@@ -8,8 +8,7 @@ interface StartScreenProps {
 export function StartScreen({ highScore, onStart }: StartScreenProps) {
   return (
     <div
-      className="absolute inset-0 flex flex-col items-center justify-center z-10 cursor-pointer"
-      onClick={onStart}
+      className="absolute inset-0 flex flex-col items-center justify-center z-10 pointer-events-none"
     >
       <h1 className="text-white font-mono text-6xl font-bold tracking-widest mb-4">
         SCAR

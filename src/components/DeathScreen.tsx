@@ -32,7 +32,7 @@ export function DeathScreen({ score, kills, highScore, isNewHighScore, onRestart
             SHARE
           </button>
           <button
-            onClick={onRestart}
+            onClick={(e) => { e.stopPropagation(); onRestart(); }}
             className="border border-white/50 text-white font-mono text-sm px-6 py-2 hover:bg-white/10 transition-colors"
           >
             AGAIN

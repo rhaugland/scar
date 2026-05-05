@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { GameCanvas } from '@/components/GameCanvas'
 import { StartScreen } from '@/components/StartScreen'
 import { DeathScreen } from '@/components/DeathScreen'
@@ -11,7 +11,8 @@ import type { GameState } from '@/engine/types'
 export default function Home() {
   const [screen, setScreen] = useState<'start' | 'playing' | 'dead'>('start')
   const [deathState, setDeathState] = useState<GameState | null>(null)
-  const [highScore, setHighScore] = useState(getHighScore())
+  const [highScore, setHighScore] = useState(0)
+  useEffect(() => { setHighScore(getHighScore()) }, [])
 
   const handleStart = useCallback(() => {
     setScreen('playing')
@@ -25,6 +26,9 @@ export default function Home() {
 
   const handleRestart = useCallback(() => {
     setScreen('playing')
+    // Trigger canvas click to restart game loop
+    const canvas = document.querySelector('canvas')
+    canvas?.click()
   }, [])
 
   const handleShare = useCallback(() => {
