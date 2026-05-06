@@ -3,6 +3,7 @@
 interface StartScreenProps {
   highScore: number
   onStart: () => void
+  monsterCount?: number
 }
 
 export function StartScreen({ highScore, onStart }: StartScreenProps) {

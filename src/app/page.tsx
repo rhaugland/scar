@@ -4,18 +4,30 @@ import { useState, useCallback, useEffect } from 'react'
 import { GameCanvas } from '@/components/GameCanvas'
 import { StartScreen } from '@/components/StartScreen'
 import { DeathScreen } from '@/components/DeathScreen'
+import { HatchingScreen } from '@/components/HatchingScreen'
 import { shareArenaPainting } from '@/lib/share'
 import { getHighScore } from '@/lib/storage'
-import type { GameState } from '@/engine/types'
+import { addMonster, getMonsterCount } from '@/lib/monsterStorage'
+import type { GameState, Monster } from '@/engine/types'
 
 export default function Home() {
-  const [screen, setScreen] = useState<'start' | 'playing' | 'dead'>('start')
+  const [screen, setScreen] = useState<'start' | 'playing' | 'hatching' | 'dead'>('start')
   const [deathState, setDeathState] = useState<GameState | null>(null)
   const [highScore, setHighScore] = useState(0)
-  useEffect(() => { setHighScore(getHighScore()) }, [])
+  const [monsterCount, setMonsterCount] = useState(0)
+  useEffect(() => {
+    setHighScore(getHighScore())
+    setMonsterCount(getMonsterCount())
+  }, [])
 
   const handleStart = useCallback(() => {
     setScreen('playing')
+  }, [])
+
+  const handleHatching = useCallback((state: GameState) => {
+    setDeathState(state)
+    setHighScore(state.highScore)
+    setScreen('hatching')
   }, [])
 
   const handleDeath = useCallback((state: GameState) => {
@@ -24,9 +36,18 @@ export default function Home() {
     setScreen('dead')
   }, [])
 
+  const handleAddMonster = useCallback((monster: Monster) => {
+    addMonster(monster)
+    setMonsterCount(getMonsterCount())
+    setScreen('dead')
+  }, [])
+
+  const handleSkipMonster = useCallback(() => {
+    setScreen('dead')
+  }, [])
+
   const handleRestart = useCallback(() => {
     setScreen('playing')
-    // Trigger canvas click to restart game loop
     const canvas = document.querySelector('canvas')
     canvas?.click()
   }, [])
@@ -40,10 +61,21 @@ export default function Home() {
 
   return (
     <div className="w-screen h-screen flex items-center justify-center bg-black relative">
-      <GameCanvas onDeath={handleDeath} onStart={handleStart} />
+      <GameCanvas onDeath={handleDeath} onHatching={handleHatching} onStart={handleStart} />
 
       {screen === 'start' && (
-        <StartScreen highScore={highScore} onStart={handleStart} />
+        <StartScreen highScore={highScore} onStart={handleStart} monsterCount={monsterCount} />
+      )}
+
+      {screen === 'hatching' && deathState && (
+        <HatchingScreen
+          scars={deathState.scars}
+          level={deathState.level}
+          kills={deathState.kills}
+          lineColor={deathState.lineColor}
+          onAddMonster={handleAddMonster}
+          onSkip={handleSkipMonster}
+        />
       )}
 
       {screen === 'dead' && deathState && (

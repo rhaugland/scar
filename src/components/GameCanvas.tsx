@@ -11,10 +11,11 @@ import { getHighScore, setHighScore } from '@/lib/storage'
 
 interface GameCanvasProps {
   onDeath: (state: GameState) => void
+  onHatching: (state: GameState) => void
   onStart: () => void
 }
 
-export function GameCanvas({ onDeath, onStart }: GameCanvasProps) {
+export function GameCanvas({ onDeath, onHatching, onStart }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const stateRef = useRef<GameState>(createGameState(getHighScore()))
   const inputRef = useRef<KeyboardInput | TouchInput | null>(null)
@@ -44,15 +45,15 @@ export function GameCanvas({ onDeath, onStart }: GameCanvasProps) {
 
       stateRef.current = newState
 
-      if (newState.status === 'dead') {
+      if (newState.status === 'hatching') {
         if (newState.score > newState.highScore) {
           setHighScore(newState.score)
           stateRef.current = { ...newState, highScore: newState.score }
         }
-        setGameStatus('dead')
+        setGameStatus('hatching')
         inputRef.current?.disable()
         renderDeathScreen(ctx, stateRef.current)
-        onDeath(stateRef.current)
+        onHatching(stateRef.current)
         return
       }
 
@@ -66,7 +67,7 @@ export function GameCanvas({ onDeath, onStart }: GameCanvasProps) {
     } else if (state.status === 'paused') {
       render(ctx, state)
       return
-    } else if (state.status === 'dead') {
+    } else if (state.status === 'dead' || state.status === 'hatching') {
       renderDeathScreen(ctx, state)
       return
     } else if (state.status === 'level-complete') {
@@ -75,7 +76,7 @@ export function GameCanvas({ onDeath, onStart }: GameCanvasProps) {
     }
 
     rafRef.current = requestAnimationFrame(gameLoop)
-  }, [onDeath])
+  }, [onDeath, onHatching])
 
   const handleStart = useCallback(() => {
     stateRef.current = startGame(stateRef.current)
@@ -158,7 +159,7 @@ export function GameCanvas({ onDeath, onStart }: GameCanvasProps) {
   const handleCanvasClick = useCallback(() => {
     if (gameStatus === 'idle') {
       handleStart()
-    } else if (gameStatus === 'dead') {
+    } else if (gameStatus === 'dead' || gameStatus === 'hatching') {
       handleRestart()
     } else if (gameStatus === 'level-complete') {
       handleNextLevel()
