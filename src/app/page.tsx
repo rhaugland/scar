@@ -10,8 +10,9 @@ import { CollectionTab } from '@/components/CollectionTab'
 import { BattleTab } from '@/components/BattleTab'
 import { shareArenaPainting } from '@/lib/share'
 import { getHighScore } from '@/lib/storage'
-import { addMonster, getMonsterCount, getMonsters } from '@/lib/monsterStorage'
-import type { GameState, Monster } from '@/engine/types'
+import { addMonster, getMonsterCount } from '@/lib/monsterStorage'
+import { getCards, getCardCount } from '@/lib/cardStorage'
+import type { GameState, Monster, CollectedCard } from '@/engine/types'
 
 type Tab = 'play' | 'collection' | 'battle'
 
@@ -21,11 +22,11 @@ export default function Home() {
   const [deathState, setDeathState] = useState<GameState | null>(null)
   const [highScore, setHighScore] = useState(0)
   const [monsterCount, setMonsterCount] = useState(0)
-  const [monsters, setMonsters] = useState<Monster[]>([])
+  const [cards, setCards] = useState<CollectedCard[]>([])
 
   const refreshMonsters = useCallback(() => {
-    setMonsters(getMonsters())
-    setMonsterCount(getMonsterCount())
+    setCards(getCards())
+    setMonsterCount(getCardCount())
   }, [])
 
   useEffect(() => {
@@ -81,7 +82,7 @@ export default function Home() {
     <div className="w-screen h-screen bg-black relative overflow-hidden">
       {/* Play tab */}
       <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 ${tab === 'play' ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}`}>
-        <GameCanvas onDeath={handleDeath} onHatching={handleHatching} onStart={handleStart} />
+        <GameCanvas onDeath={handleDeath} onStart={handleStart} />
 
         {screen === 'start' && (
           <StartScreen highScore={highScore} onStart={handleStart} monsterCount={monsterCount} />
@@ -105,15 +106,18 @@ export default function Home() {
             level={deathState.level}
             highScore={deathState.highScore}
             isNewHighScore={deathState.score >= deathState.highScore}
+            currentTier={null}
+            nextTierName={null}
+            nextTierLevel={null}
             onRestart={handleRestart}
-            onShare={handleShare}
+            onViewCollection={() => setTab('collection')}
           />
         )}
       </div>
 
       {/* Collection tab */}
       <div className={`absolute inset-0 transition-opacity duration-200 ${tab === 'collection' ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}`}>
-        <CollectionTab monsters={monsters} onMonstersChange={refreshMonsters} />
+        <CollectionTab cards={cards} onCardsChange={refreshMonsters} />
       </div>
 
       {/* Battle tab */}

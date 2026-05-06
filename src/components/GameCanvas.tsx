@@ -11,11 +11,10 @@ import { getHighScore, setHighScore } from '@/lib/storage'
 
 interface GameCanvasProps {
   onDeath: (state: GameState) => void
-  onHatching: (state: GameState) => void
   onStart: () => void
 }
 
-export function GameCanvas({ onDeath, onHatching, onStart }: GameCanvasProps) {
+export function GameCanvas({ onDeath, onStart }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const stateRef = useRef<GameState>(createGameState(getHighScore()))
   const inputRef = useRef<KeyboardInput | TouchInput | null>(null)
@@ -45,15 +44,15 @@ export function GameCanvas({ onDeath, onHatching, onStart }: GameCanvasProps) {
 
       stateRef.current = newState
 
-      if (newState.status === 'hatching') {
+      if (newState.status === 'hatching' || newState.status === 'dead') {
         if (newState.score > newState.highScore) {
           setHighScore(newState.score)
           stateRef.current = { ...newState, highScore: newState.score }
         }
-        setGameStatus('hatching')
+        setGameStatus('dead')
         inputRef.current?.disable()
         renderDeathScreen(ctx, stateRef.current)
-        onHatching(stateRef.current)
+        onDeath(stateRef.current)
         return
       }
 
@@ -76,7 +75,7 @@ export function GameCanvas({ onDeath, onHatching, onStart }: GameCanvasProps) {
     }
 
     rafRef.current = requestAnimationFrame(gameLoop)
-  }, [onDeath, onHatching])
+  }, [onDeath])
 
   const handleStart = useCallback(() => {
     stateRef.current = startGame(stateRef.current)

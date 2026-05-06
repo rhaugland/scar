@@ -3,31 +3,23 @@
 import { useState, useCallback } from 'react'
 import { CollectionGrid } from './CollectionGrid'
 import { MonsterDetail } from './MonsterDetail'
-import { removeMonster, getMonsters } from '@/lib/monsterStorage'
-import type { Monster } from '@/engine/types'
+import type { CollectedCard } from '@/engine/types'
 
 interface CollectionTabProps {
-  monsters: Monster[]
-  onMonstersChange: () => void
+  cards: CollectedCard[]
+  onCardsChange: () => void
 }
 
-export function CollectionTab({ monsters, onMonstersChange }: CollectionTabProps) {
-  const [selected, setSelected] = useState<Monster | null>(null)
+export function CollectionTab({ cards, onCardsChange }: CollectionTabProps) {
+  const [selected, setSelected] = useState<CollectedCard | null>(null)
 
-  const handleSelect = useCallback((monster: Monster) => {
-    setSelected(monster)
+  const handleSelect = useCallback((card: CollectedCard) => {
+    setSelected(card)
   }, [])
 
   const handleBack = useCallback(() => {
     setSelected(null)
   }, [])
-
-  const handleRelease = useCallback(() => {
-    if (!selected) return
-    removeMonster(selected.id)
-    onMonstersChange()
-    setSelected(null)
-  }, [selected, onMonstersChange])
 
   return (
     <div className="flex flex-col items-center h-full pt-6 pb-20 overflow-y-auto">
@@ -36,16 +28,15 @@ export function CollectionTab({ monsters, onMonstersChange }: CollectionTabProps
           COLLECTION
         </h2>
         <span className="text-white/30 font-mono text-sm">
-          {monsters.length}/50
+          {cards.length}
         </span>
       </div>
 
-      <CollectionGrid monsters={monsters} onSelect={handleSelect} />
+      <CollectionGrid cards={cards} onSelect={handleSelect} />
 
       {selected && (
         <MonsterDetail
-          monster={selected}
-          onRelease={handleRelease}
+          card={selected}
           onBack={handleBack}
         />
       )}

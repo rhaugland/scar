@@ -1,44 +1,42 @@
 'use client'
 
 import { useState } from 'react'
-import type { Monster } from '@/engine/types'
-import { MonsterCard } from './MonsterCard'
+import type { CollectedCard, Tier } from '@/engine/types'
+import { CardTile } from './CardTile'
 
-type SortKey = 'newest' | 'hp' | 'attack' | 'level'
+type SortKey = 'newest' | 'tier' | 'name'
 
 interface CollectionGridProps {
-  monsters: Monster[]
-  onSelect: (monster: Monster) => void
+  cards: CollectedCard[]
+  onSelect: (card: CollectedCard) => void
 }
 
-function sortMonsters(monsters: Monster[], key: SortKey): Monster[] {
-  const sorted = [...monsters]
+const TIER_RANK: Record<Tier, number> = { bronze: 1, silver: 2, gold: 3 }
+
+function sortCards(cards: CollectedCard[], key: SortKey): CollectedCard[] {
+  const sorted = [...cards]
   switch (key) {
     case 'newest':
-      return sorted.sort((a, b) => b.createdAt - a.createdAt)
-    case 'hp':
-      return sorted.sort((a, b) => b.stats.hp - a.stats.hp)
-    case 'attack':
-      return sorted.sort((a, b) => b.stats.attack - a.stats.attack)
-    case 'level':
-      return sorted.sort((a, b) => b.level - a.level)
+      return sorted.sort((a, b) => b.unlockedAt - a.unlockedAt)
+    case 'tier':
+      return sorted.sort((a, b) => TIER_RANK[b.tier] - TIER_RANK[a.tier])
+    case 'name':
+      return sorted.sort((a, b) => a.name.localeCompare(b.name))
   }
 }
 
 const SORT_OPTIONS: { key: SortKey; label: string }[] = [
   { key: 'newest', label: 'NEWEST' },
-  { key: 'hp', label: 'HP' },
-  { key: 'attack', label: 'ATK' },
-  { key: 'level', label: 'LVL' },
+  { key: 'tier', label: 'TIER' },
+  { key: 'name', label: 'NAME' },
 ]
 
-export function CollectionGrid({ monsters, onSelect }: CollectionGridProps) {
+export function CollectionGrid({ cards, onSelect }: CollectionGridProps) {
   const [sortKey, setSortKey] = useState<SortKey>('newest')
-  const sorted = sortMonsters(monsters, sortKey)
+  const sorted = sortCards(cards, sortKey)
 
   return (
     <div className="flex flex-col gap-4 w-full max-w-[700px] mx-auto px-4">
-      {/* Sort bar */}
       <div className="flex gap-2 justify-center">
         {SORT_OPTIONS.map(opt => (
           <button
@@ -55,18 +53,17 @@ export function CollectionGrid({ monsters, onSelect }: CollectionGridProps) {
         ))}
       </div>
 
-      {/* Grid */}
       {sorted.length === 0 ? (
         <p className="text-white/30 font-mono text-sm text-center mt-12">
-          No monsters yet. Play SCAR to create your first!
+          No cards yet. Play to unlock today&apos;s card!
         </p>
       ) : (
         <div className="grid grid-cols-3 gap-2">
-          {sorted.map(monster => (
-            <MonsterCard
-              key={monster.id}
-              monster={monster}
-              onClick={() => onSelect(monster)}
+          {sorted.map(card => (
+            <CardTile
+              key={card.date}
+              card={card}
+              onClick={() => onSelect(card)}
             />
           ))}
         </div>

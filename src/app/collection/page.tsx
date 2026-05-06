@@ -4,31 +4,24 @@ import { useState, useCallback, useEffect } from 'react'
 import Link from 'next/link'
 import { CollectionGrid } from '@/components/CollectionGrid'
 import { MonsterDetail } from '@/components/MonsterDetail'
-import { getMonsters, removeMonster } from '@/lib/monsterStorage'
-import type { Monster } from '@/engine/types'
+import { getCards } from '@/lib/cardStorage'
+import type { CollectedCard } from '@/engine/types'
 
 export default function CollectionPage() {
-  const [monsters, setMonsters] = useState<Monster[]>([])
-  const [selected, setSelected] = useState<Monster | null>(null)
+  const [cards, setCards] = useState<CollectedCard[]>([])
+  const [selected, setSelected] = useState<CollectedCard | null>(null)
 
   useEffect(() => {
-    setMonsters(getMonsters())
+    setCards(getCards())
   }, [])
 
-  const handleSelect = useCallback((monster: Monster) => {
-    setSelected(monster)
+  const handleSelect = useCallback((card: CollectedCard) => {
+    setSelected(card)
   }, [])
 
   const handleBack = useCallback(() => {
     setSelected(null)
   }, [])
-
-  const handleRelease = useCallback(() => {
-    if (!selected) return
-    removeMonster(selected.id)
-    setMonsters(getMonsters())
-    setSelected(null)
-  }, [selected])
 
   return (
     <div className="min-h-screen bg-black flex flex-col items-center py-8">
@@ -43,16 +36,15 @@ export default function CollectionPage() {
           COLLECTION
         </h1>
         <span className="text-white/30 font-mono text-sm">
-          {monsters.length}/50
+          {cards.length}
         </span>
       </div>
 
-      <CollectionGrid monsters={monsters} onSelect={handleSelect} />
+      <CollectionGrid cards={cards} onSelect={handleSelect} />
 
       {selected && (
         <MonsterDetail
-          monster={selected}
-          onRelease={handleRelease}
+          card={selected}
           onBack={handleBack}
         />
       )}
