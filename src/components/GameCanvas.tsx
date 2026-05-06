@@ -72,6 +72,8 @@ export function GameCanvas({ onDeath, onStart }: GameCanvasProps) {
     setGameStatus('playing')
     // Disable input briefly so the start/restart click doesn't fire a dash
     inputRef.current?.disable()
+    // Focus canvas for keyboard input
+    canvasRef.current?.focus()
     onStart()
     rafRef.current = requestAnimationFrame(gameLoop)
     // Enable dash input after 300ms (well after the click event finishes propagating)
@@ -100,17 +102,24 @@ export function GameCanvas({ onDeath, onStart }: GameCanvasProps) {
     }
   }, [])
 
+  // Handle clicks: start/restart when not playing, dash passthrough when playing
+  const handleCanvasClick = useCallback(() => {
+    if (gameStatus === 'idle') {
+      handleStart()
+    } else if (gameStatus === 'dead') {
+      handleRestart()
+    }
+    // When 'playing', do nothing — let the KeyboardInput's native listener handle dash
+  }, [gameStatus, handleStart, handleRestart])
+
   return (
     <canvas
       ref={canvasRef}
       width={CANVAS_SIZE}
       height={CANVAS_SIZE}
-      className="w-full h-full max-w-[700px] max-h-[700px] aspect-square"
-      style={{ imageRendering: 'pixelated' }}
-      onClick={() => {
-        if (gameStatus === 'idle') handleStart()
-        else if (gameStatus === 'dead') handleRestart()
-      }}
+      className="w-full h-full max-w-[700px] max-h-[700px] aspect-square cursor-crosshair"
+      onClick={handleCanvasClick}
+      onFocus={() => {}} // ensure focusable
       tabIndex={0}
     />
   )
