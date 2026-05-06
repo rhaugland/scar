@@ -1,6 +1,5 @@
 import type { InputState, Vec2 } from '@/engine/types'
 import type { InputHandler } from './types'
-import { ARENA_CENTER } from '@/engine/constants'
 import { normalize, sub } from '@/engine/vec2'
 
 export class KeyboardInput implements InputHandler {
@@ -8,6 +7,7 @@ export class KeyboardInput implements InputHandler {
   private dashDir: Vec2 | null = null
   private mousePos: Vec2 = { x: 0, y: 0 }
   private element: HTMLElement | null = null
+  private enabled = false
 
   private onKeyDown = (e: KeyboardEvent) => {
     this.keys.add(e.key.toLowerCase())
@@ -24,8 +24,28 @@ export class KeyboardInput implements InputHandler {
       y: (e.clientY - rect.top) * scaleY,
     }
   }
+  private playerPos: Vec2 = { x: 350, y: 350 }
+
+  setPlayerPos(pos: Vec2): void {
+    this.playerPos = pos
+  }
+
   private onClick = () => {
-    this.dashDir = normalize(sub(this.mousePos, ARENA_CENTER))
+    if (!this.enabled) return
+    // Dash toward mouse position relative to player
+    const dir = sub(this.mousePos, this.playerPos)
+    if (dir.x !== 0 || dir.y !== 0) {
+      this.dashDir = normalize(dir)
+    }
+  }
+
+  enable(): void {
+    this.enabled = true
+  }
+
+  disable(): void {
+    this.enabled = false
+    this.dashDir = null
   }
 
   attach(element: HTMLElement): void {

@@ -73,7 +73,7 @@ export function tick(state: GameState, input: InputState): GameState {
     // Dash just completed — create scar and check kills
     if (wasDashing && !newState.player.isDashing && newState.player.dashStart && newState.player.dashEnd) {
       newState.scars = [...newState.scars, createScar(newState.player.dashStart, newState.player.dashEnd)]
-      scarGraceFrames = 5  // brief invulnerability to own scar after dash
+      scarGraceFrames = 20  // ~333ms invulnerability after dash to move away from scar
 
       const killed = checkDashKills(
         newState.player.dashStart,

@@ -9,8 +9,19 @@ export class TouchInput implements InputHandler {
   private swipeStart: Vec2 | null = null
   private element: HTMLElement | null = null
   private joystickTouchId: number | null = null
+  private enabled = false
+
+  enable(): void {
+    this.enabled = true
+  }
+
+  disable(): void {
+    this.enabled = false
+    this.dashDir = null
+  }
 
   private onTouchStart = (e: TouchEvent) => {
+    if (!this.enabled) return
     e.preventDefault()
     const rect = this.element!.getBoundingClientRect()
     for (let i = 0; i < e.changedTouches.length; i++) {

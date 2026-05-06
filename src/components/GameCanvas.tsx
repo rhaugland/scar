@@ -29,7 +29,12 @@ export function GameCanvas({ onDeath, onStart }: GameCanvasProps) {
 
     const state = stateRef.current
     if (state.status === 'playing') {
-      const input = inputRef.current?.getState() ?? { moveX: 0, moveY: 0, dashDirection: null }
+      // Update player position for dash direction calculation
+      const handler = inputRef.current
+      if (handler && 'setPlayerPos' in handler) {
+        (handler as KeyboardInput).setPlayerPos(state.player.position)
+      }
+      const input = handler?.getState() ?? { moveX: 0, moveY: 0, dashDirection: null }
       const prevKills = state.kills
       const newState = tick(state, input)
 
@@ -47,6 +52,7 @@ export function GameCanvas({ onDeath, onStart }: GameCanvasProps) {
           stateRef.current = { ...newState, highScore: newState.score }
         }
         setGameStatus('dead')
+        inputRef.current?.disable()
         renderDeathScreen(ctx, stateRef.current)
         onDeath(stateRef.current)
         return
@@ -64,10 +70,14 @@ export function GameCanvas({ onDeath, onStart }: GameCanvasProps) {
   const handleStart = useCallback(() => {
     stateRef.current = startGame(stateRef.current)
     setGameStatus('playing')
-    // Consume the dash input from the start/restart click so it doesn't fire a dash
-    inputRef.current?.getState()
+    // Disable input briefly so the start/restart click doesn't fire a dash
+    inputRef.current?.disable()
     onStart()
     rafRef.current = requestAnimationFrame(gameLoop)
+    // Enable dash input after 300ms (well after the click event finishes propagating)
+    setTimeout(() => {
+      inputRef.current?.enable()
+    }, 300)
   }, [gameLoop, onStart])
 
   const handleRestart = useCallback(() => {
