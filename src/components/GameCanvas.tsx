@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useEffect, useCallback, useState } from 'react'
-import type { GameState } from '@/engine/types'
+import type { GameState, GameStatus } from '@/engine/types'
 import { createGameState, startGame, tick, togglePause, changeLineColor, nextLevel } from '@/engine/game'
 import { render, renderDeathScreen, triggerScreenShake } from '@/engine/renderer'
 import { KeyboardInput } from '@/input/keyboard'
@@ -19,7 +19,7 @@ export function GameCanvas({ onDeath, onStart }: GameCanvasProps) {
   const stateRef = useRef<GameState>(createGameState(getHighScore()))
   const inputRef = useRef<KeyboardInput | TouchInput | null>(null)
   const rafRef = useRef<number>(0)
-  const [gameStatus, setGameStatus] = useState<'idle' | 'playing' | 'paused' | 'dead' | 'level-complete'>('idle')
+  const [gameStatus, setGameStatus] = useState<GameStatus>('idle')
 
   const gameLoop = useCallback(() => {
     const canvas = canvasRef.current

@@ -65,6 +65,20 @@ export interface LevelConfig {
   enemyCount: number  // max enemies at once
 }
 
+export const MONSTER_CAP = 50
+
+export const NAME_PREFIXES = [
+  'Void', 'Neon', 'Crimson', 'Shadow', 'Crystal',
+  'Ember', 'Frost', 'Lunar', 'Solar', 'Iron',
+  'Phantom', 'Storm', 'Ash', 'Drift', 'Pulse',
+] as const
+
+export const NAME_SUFFIXES = [
+  'Crawler', 'Shard', 'Fang', 'Wisp', 'Thorn',
+  'Wraith', 'Spark', 'Coil', 'Drifter', 'Bloom',
+  'Striker', 'Shade', 'Flare', 'Claw', 'Weaver',
+] as const
+
 export function getLevelConfig(level: number): LevelConfig {
   return {
     level,

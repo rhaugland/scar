@@ -37,7 +37,7 @@ export interface Goal {
   angle: number  // for circular floating motion
 }
 
-export type GameStatus = 'idle' | 'playing' | 'paused' | 'dead' | 'level-complete'
+export type GameStatus = 'idle' | 'playing' | 'paused' | 'dead' | 'hatching' | 'level-complete'
 
 export interface GameState {
   status: GameStatus
@@ -55,6 +55,25 @@ export interface GameState {
   lastTrailPos: Vec2 | null
   invulnFrames: number
   lineColor: string
+}
+
+export interface Monster {
+  id: string
+  name: string
+  scars: Scar[]
+  stats: {
+    hp: number
+    attack: number
+  }
+  level: number
+  kills: number
+  lineColors: string[]
+  createdAt: number
+}
+
+export interface MonsterCollection {
+  monsters: Monster[]
+  version: 1
 }
 
 export interface InputState {
