@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest'
 import { createTimer, tickTimer, addTime, getTimerColor } from '@/engine/timer'
-import { TIMER_START, TIMER_PER_KILL, COLORS } from '@/engine/constants'
+import { TIMER_PER_KILL, COLORS } from '@/engine/constants'
 
 describe('timer', () => {
-  it('createTimer starts at TIMER_START', () => {
-    expect(createTimer()).toBe(TIMER_START)
+  it('createTimer starts at 10', () => {
+    expect(createTimer()).toBe(10.0)
   })
 
   it('tickTimer decreases by dt', () => {

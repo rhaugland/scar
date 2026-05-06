@@ -1,12 +1,13 @@
 import type { Vec2, Scar } from './types'
 import { SCAR_WIDTH, SCAR_DIM_TIME, SCAR_MIN_OPACITY } from './constants'
 
-export function createScar(start: Vec2, end: Vec2): Scar {
+export function createScar(start: Vec2, end: Vec2, color = '#ec4899'): Scar {
   return {
     start,
     end,
     createdAt: Date.now(),
     width: SCAR_WIDTH,
+    color,
   }
 }
 

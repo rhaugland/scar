@@ -1,7 +1,7 @@
-import { TIMER_START, TIMER_PER_KILL, COLORS } from './constants'
+import { TIMER_PER_KILL, COLORS } from './constants'
 
 export function createTimer(): number {
-  return TIMER_START
+  return 10.0
 }
 
 export function tickTimer(timer: number, dt: number): number {

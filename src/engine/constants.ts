@@ -16,7 +16,6 @@ export const ENEMY_RADIUS = 10
 export const ENEMY_SPEED = 1.5
 export const ENEMY_KILL_RADIUS = 15
 
-export const TIMER_START = 10.0
 export const TIMER_PER_KILL = 2.0
 
 export const SPAWN_RATES = [
@@ -28,7 +27,18 @@ export const SPAWN_RATES = [
 
 export const GRACE_PERIOD = 1.5
 
-export const PLAYER_MAX_LIVES = 3
+export const PLAYER_MAX_LIVES = 5
+
+export const LINE_COLORS = [
+  '#ec4899', // pink
+  '#3b82f6', // blue
+  '#22c55e', // green
+  '#f59e0b', // amber
+  '#8b5cf6', // purple
+  '#ef4444', // red
+  '#06b6d4', // cyan
+  '#f97316', // orange
+] as const
 export const TRAIL_MIN_DISTANCE = 15  // min px between trail scar segments
 export const INVULN_FRAMES = 60  // ~1 second of invulnerability after scar hit
 export const TRAIL_SAFE_SEGMENTS = 3  // don't check collision against the N newest trail scars

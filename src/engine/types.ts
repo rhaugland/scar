@@ -8,6 +8,7 @@ export interface Scar {
   end: Vec2
   createdAt: number
   width: number
+  color: string
 }
 
 export interface Enemy {
@@ -28,14 +29,14 @@ export interface Player {
   dashProgress: number
 }
 
-export type GameStatus = 'idle' | 'playing' | 'dead'
+export type GameStatus = 'idle' | 'playing' | 'paused' | 'dead'
 
 export interface GameState {
   status: GameStatus
   player: Player
   scars: Scar[]
   enemies: Enemy[]
-  timer: number
+  elapsed: number
   score: number
   kills: number
   lives: number
@@ -43,6 +44,7 @@ export interface GameState {
   startTime: number
   lastTrailPos: Vec2 | null
   invulnFrames: number
+  lineColor: string
 }
 
 export interface InputState {

@@ -2,7 +2,7 @@
 
 import { useRef, useEffect, useCallback, useState } from 'react'
 import type { GameState } from '@/engine/types'
-import { createGameState, startGame, tick } from '@/engine/game'
+import { createGameState, startGame, tick, togglePause, changeLineColor } from '@/engine/game'
 import { render, renderDeathScreen, triggerScreenShake } from '@/engine/renderer'
 import { KeyboardInput } from '@/input/keyboard'
 import { TouchInput } from '@/input/touch'
@@ -19,7 +19,7 @@ export function GameCanvas({ onDeath, onStart }: GameCanvasProps) {
   const stateRef = useRef<GameState>(createGameState(getHighScore()))
   const inputRef = useRef<KeyboardInput | TouchInput | null>(null)
   const rafRef = useRef<number>(0)
-  const [gameStatus, setGameStatus] = useState<'idle' | 'playing' | 'dead'>('idle')
+  const [gameStatus, setGameStatus] = useState<'idle' | 'playing' | 'paused' | 'dead'>('idle')
 
   const gameLoop = useCallback(() => {
     const canvas = canvasRef.current
@@ -28,8 +28,8 @@ export function GameCanvas({ onDeath, onStart }: GameCanvasProps) {
     if (!ctx) return
 
     const state = stateRef.current
+
     if (state.status === 'playing') {
-      // Update player position for dash direction calculation
       const handler = inputRef.current
       if (handler && 'setPlayerPos' in handler) {
         (handler as KeyboardInput).setPlayerPos(state.player.position)
@@ -38,7 +38,6 @@ export function GameCanvas({ onDeath, onStart }: GameCanvasProps) {
       const prevKills = state.kills
       const newState = tick(state, input)
 
-      // Screen shake on kill
       if (newState.kills > prevKills) {
         triggerScreenShake()
       }
@@ -46,7 +45,6 @@ export function GameCanvas({ onDeath, onStart }: GameCanvasProps) {
       stateRef.current = newState
 
       if (newState.status === 'dead') {
-        // Update high score
         if (newState.score > newState.highScore) {
           setHighScore(newState.score)
           stateRef.current = { ...newState, highScore: newState.score }
@@ -59,6 +57,10 @@ export function GameCanvas({ onDeath, onStart }: GameCanvasProps) {
       }
 
       render(ctx, newState)
+    } else if (state.status === 'paused') {
+      // Still render but with pause overlay
+      render(ctx, state)
+      return // stop RAF while paused
     } else if (state.status === 'dead') {
       renderDeathScreen(ctx, state)
       return
@@ -70,13 +72,10 @@ export function GameCanvas({ onDeath, onStart }: GameCanvasProps) {
   const handleStart = useCallback(() => {
     stateRef.current = startGame(stateRef.current)
     setGameStatus('playing')
-    // Disable input briefly so the start/restart click doesn't fire a dash
     inputRef.current?.disable()
-    // Focus canvas for keyboard input
     canvasRef.current?.focus()
     onStart()
     rafRef.current = requestAnimationFrame(gameLoop)
-    // Enable dash input after 300ms (well after the click event finishes propagating)
     setTimeout(() => {
       inputRef.current?.enable()
     }, 300)
@@ -86,11 +85,49 @@ export function GameCanvas({ onDeath, onStart }: GameCanvasProps) {
     handleStart()
   }, [handleStart])
 
+  // Keyboard handler for pause + color change
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      const key = e.key.toLowerCase()
+
+      // Space = pause/unpause
+      if (key === ' ' || key === 'escape') {
+        e.preventDefault()
+        const state = stateRef.current
+        if (state.status === 'playing' || state.status === 'paused') {
+          stateRef.current = togglePause(state)
+          const newStatus = stateRef.current.status
+          setGameStatus(newStatus as 'playing' | 'paused')
+
+          if (newStatus === 'playing') {
+            // Resume game loop
+            rafRef.current = requestAnimationFrame(gameLoop)
+          } else {
+            // Render pause screen
+            const canvas = canvasRef.current
+            const ctx = canvas?.getContext('2d')
+            if (ctx) render(ctx, stateRef.current)
+          }
+        }
+      }
+
+      // C = change line color (only while paused)
+      if (key === 'c' && stateRef.current.status === 'paused') {
+        stateRef.current = changeLineColor(stateRef.current)
+        const canvas = canvasRef.current
+        const ctx = canvas?.getContext('2d')
+        if (ctx) render(ctx, stateRef.current)
+      }
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [gameLoop])
+
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
 
-    // Detect touch support
     const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0
     const handler = isTouchDevice ? new TouchInput() : new KeyboardInput()
     handler.attach(canvas)
@@ -102,14 +139,12 @@ export function GameCanvas({ onDeath, onStart }: GameCanvasProps) {
     }
   }, [])
 
-  // Handle clicks: start/restart when not playing, dash passthrough when playing
   const handleCanvasClick = useCallback(() => {
     if (gameStatus === 'idle') {
       handleStart()
     } else if (gameStatus === 'dead') {
       handleRestart()
     }
-    // When 'playing', do nothing — let the KeyboardInput's native listener handle dash
   }, [gameStatus, handleStart, handleRestart])
 
   return (
@@ -119,7 +154,6 @@ export function GameCanvas({ onDeath, onStart }: GameCanvasProps) {
       height={CANVAS_SIZE}
       className="w-full h-full max-w-[700px] max-h-[700px] aspect-square cursor-crosshair"
       onClick={handleCanvasClick}
-      onFocus={() => {}} // ensure focusable
       tabIndex={0}
     />
   )

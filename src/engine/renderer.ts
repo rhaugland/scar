@@ -1,6 +1,5 @@
 import type { GameState } from './types'
 import { getScarOpacity } from './scar'
-import { getTimerColor } from './timer'
 import { CANVAS_SIZE, ARENA_CENTER, ARENA_RADIUS, COLORS, SCREEN_SHAKE_DURATION, SCREEN_SHAKE_INTENSITY, PLAYER_MAX_LIVES } from './constants'
 
 let shakeUntil = 0
@@ -40,8 +39,8 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState): void {
   for (const scar of state.scars) {
     const opacity = getScarOpacity(scar.createdAt, now)
 
-    // Glow layer
-    ctx.strokeStyle = COLORS.scarGlow
+    // Glow layer (uses scar's own color)
+    ctx.strokeStyle = scar.color
     ctx.globalAlpha = opacity * 0.5
     ctx.lineWidth = scar.width
     ctx.lineCap = 'round'
@@ -51,8 +50,8 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState): void {
     ctx.stroke()
 
     // Core layer
-    ctx.strokeStyle = COLORS.scarCore
-    ctx.globalAlpha = opacity
+    ctx.strokeStyle = '#ffffff'
+    ctx.globalAlpha = opacity * 0.8
     ctx.lineWidth = 2
     ctx.beginPath()
     ctx.moveTo(scar.start.x, scar.start.y)
@@ -109,18 +108,17 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState): void {
     ctx.restore()
   }
 
-  // HUD: Timer
-  if (state.status === 'playing') {
-    const timerText = state.timer.toFixed(1)
-    const timerColor = getTimerColor(state.timer)
+  // HUD
+  if (state.status === 'playing' || state.status === 'paused') {
+    // Elapsed time
     ctx.font = 'bold 28px monospace'
     ctx.textAlign = 'center'
-    ctx.fillStyle = timerColor
-    ctx.fillText(timerText, ARENA_CENTER.x, 40)
+    ctx.fillStyle = '#ffffff'
+    ctx.fillText(state.elapsed.toFixed(1) + 's', ARENA_CENTER.x, 40)
 
-    // Lives (hearts/pips)
+    // Lives (hearts)
     ctx.font = '16px monospace'
-    ctx.fillStyle = '#ec4899'
+    ctx.fillStyle = state.lineColor
     const livesText = '♥'.repeat(state.lives) + '♡'.repeat(PLAYER_MAX_LIVES - state.lives)
     ctx.fillText(livesText, ARENA_CENTER.x, 65)
 
@@ -128,6 +126,35 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState): void {
     ctx.font = '14px monospace'
     ctx.fillStyle = '#ffffff66'
     ctx.fillText(`${state.kills} kills`, ARENA_CENTER.x, CANVAS_SIZE - 20)
+
+    // Current line color indicator
+    ctx.fillStyle = state.lineColor
+    ctx.fillRect(ARENA_CENTER.x - 10, CANVAS_SIZE - 35, 20, 3)
+  }
+
+  // Pause overlay
+  if (state.status === 'paused') {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'
+    ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE)
+
+    ctx.font = 'bold 36px monospace'
+    ctx.textAlign = 'center'
+    ctx.fillStyle = '#ffffff'
+    ctx.fillText('PAUSED', ARENA_CENTER.x, ARENA_CENTER.y - 30)
+
+    ctx.font = '16px monospace'
+    ctx.fillStyle = '#ffffff88'
+    ctx.fillText('SPACE to resume', ARENA_CENTER.x, ARENA_CENTER.y + 10)
+    ctx.fillText('C to change line color', ARENA_CENTER.x, ARENA_CENTER.y + 35)
+
+    // Color preview
+    ctx.fillStyle = state.lineColor
+    ctx.beginPath()
+    ctx.arc(ARENA_CENTER.x, ARENA_CENTER.y + 70, 12, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.strokeStyle = '#ffffff44'
+    ctx.lineWidth = 1
+    ctx.stroke()
   }
 
   ctx.restore()
