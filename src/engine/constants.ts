@@ -67,6 +67,12 @@ export interface LevelConfig {
 
 export const MONSTER_CAP = 50
 
+export const TIER_THRESHOLDS = {
+  bronze: 3,
+  silver: 5,
+  gold: 8,
+} as const
+
 export const NAME_PREFIXES = [
   'Void', 'Neon', 'Crimson', 'Shadow', 'Crystal',
   'Ember', 'Frost', 'Lunar', 'Solar', 'Iron',

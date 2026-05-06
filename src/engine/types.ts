@@ -76,6 +76,44 @@ export interface MonsterCollection {
   version: 1
 }
 
+export type CreatureForm = 'biped' | 'quadruped' | 'serpent' | 'winged' | 'spider' | 'jellyfish'
+
+export type Tier = 'bronze' | 'silver' | 'gold'
+
+export interface DailyCard {
+  date: string
+  seed: number
+  name: string
+  form: CreatureForm
+  primaryColor: string
+  secondaryColor: string
+  baseStats: { hp: number; attack: number }
+}
+
+export interface CollectedCard {
+  date: string
+  name: string
+  tier: Tier
+  stats: { hp: number; attack: number }
+  form: CreatureForm
+  primaryColor: string
+  secondaryColor: string
+  bestLevel: number
+  bestKills: number
+  unlockedAt: number
+}
+
+export interface CardCollection {
+  cards: CollectedCard[]
+  version: 2
+  todayBest: {
+    date: string
+    tier: Tier | null
+    bestLevel: number
+    bestKills: number
+  }
+}
+
 export interface InputState {
   moveX: number
   moveY: number
