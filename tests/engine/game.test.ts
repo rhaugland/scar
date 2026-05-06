@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { createGameState, tick, startGame } from '@/engine/game'
-import { ARENA_CENTER, TIMER_START } from '@/engine/constants'
+import { createScar } from '@/engine/scar'
+import { ARENA_CENTER, TIMER_START, PLAYER_MAX_LIVES } from '@/engine/constants'
 
 describe('game', () => {
   it('createGameState returns idle state', () => {
@@ -10,6 +11,7 @@ describe('game', () => {
     expect(state.scars).toEqual([])
     expect(state.enemies).toEqual([])
     expect(state.kills).toBe(0)
+    expect(state.lives).toBe(PLAYER_MAX_LIVES)
   })
 
   it('tick with idle status does nothing', () => {
@@ -45,10 +47,38 @@ describe('game', () => {
     const input = { moveX: 0, moveY: 0, dashDirection: { x: 1, y: 0 } }
     state = tick(state, input)
     expect(state.player.isDashing).toBe(true)
-    // Advance frames until dash completes
     for (let i = 0; i < 20; i++) {
       state = tick(state, { moveX: 0, moveY: 0, dashDirection: null })
     }
     expect(state.scars.length).toBe(1)
+  })
+
+  it('movement leaves trail scars', () => {
+    let state = startGame(createGameState(0))
+    // Move right for enough frames to create trail segments
+    for (let i = 0; i < 30; i++) {
+      state = tick(state, { moveX: 1, moveY: 0, dashDirection: null })
+    }
+    expect(state.scars.length).toBeGreaterThan(0)
+  })
+
+  it('scar hit removes a life instead of instant death', () => {
+    let state = startGame(createGameState(0))
+    // Place enough scars so they pass the TRAIL_SAFE_SEGMENTS check
+    // Put a dangerous scar ahead of the player
+    const dangerScar = createScar({ x: 360, y: 350 }, { x: 380, y: 350 })
+    const dummyScars = [
+      createScar({ x: 0, y: 0 }, { x: 1, y: 0 }),
+      createScar({ x: 0, y: 0 }, { x: 1, y: 0 }),
+      createScar({ x: 0, y: 0 }, { x: 1, y: 0 }),
+    ]
+    state = { ...state, scars: [dangerScar, ...dummyScars], invulnFrames: 0, lastTrailPos: { ...state.player.position } }
+    // Move into the scar
+    for (let i = 0; i < 10; i++) {
+      state = tick(state, { moveX: 1, moveY: 0, dashDirection: null })
+      if (state.lives < PLAYER_MAX_LIVES) break
+    }
+    expect(state.lives).toBe(PLAYER_MAX_LIVES - 1)
+    expect(state.status).toBe('playing') // not dead yet
   })
 })

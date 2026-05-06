@@ -38,8 +38,11 @@ export interface GameState {
   timer: number
   score: number
   kills: number
+  lives: number
   highScore: number
   startTime: number
+  lastTrailPos: Vec2 | null
+  invulnFrames: number
 }
 
 export interface InputState {

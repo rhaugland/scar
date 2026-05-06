@@ -4,12 +4,16 @@ import { createScar } from './scar'
 import { updateEnemies, spawnEnemy, getSpawnInterval } from './enemy'
 import { tickTimer } from './timer'
 import { checkScarCollision, checkEnemyCollision, checkDashKills } from './collision'
-import { TIMER_START, PLAYER_RADIUS, ENEMY_KILL_RADIUS, GRACE_PERIOD, DASH_COOLDOWN, TIMER_PER_KILL } from './constants'
+import { distance } from './vec2'
+import {
+  TIMER_START, PLAYER_RADIUS, ENEMY_KILL_RADIUS, GRACE_PERIOD,
+  DASH_COOLDOWN, TIMER_PER_KILL, PLAYER_MAX_LIVES,
+  TRAIL_MIN_DISTANCE, INVULN_FRAMES, TRAIL_SAFE_SEGMENTS,
+} from './constants'
 
 let nextEnemyId = 0
 let spawnAccumulator = 0
 let dashCooldown = 0
-let scarGraceFrames = 0  // frames to skip scar collision after dash (avoid self-kill)
 
 export function createGameState(highScore: number): GameState {
   return {
@@ -20,8 +24,11 @@ export function createGameState(highScore: number): GameState {
     timer: TIMER_START,
     score: 0,
     kills: 0,
+    lives: PLAYER_MAX_LIVES,
     highScore,
     startTime: 0,
+    lastTrailPos: null,
+    invulnFrames: 0,
   }
 }
 
@@ -29,7 +36,6 @@ export function startGame(state: GameState): GameState {
   nextEnemyId = 0
   spawnAccumulator = 0
   dashCooldown = 0
-  scarGraceFrames = 0
   return {
     ...state,
     status: 'playing',
@@ -39,7 +45,10 @@ export function startGame(state: GameState): GameState {
     timer: TIMER_START,
     score: 0,
     kills: 0,
+    lives: PLAYER_MAX_LIVES,
     startTime: Date.now(),
+    lastTrailPos: null,
+    invulnFrames: 0,
   }
 }
 
@@ -54,6 +63,11 @@ export function tick(state: GameState, input: InputState): GameState {
   newState.score = newState.score + dt
   if (newState.timer <= 0) {
     return { ...newState, status: 'dead' }
+  }
+
+  // Invulnerability countdown
+  if (newState.invulnFrames > 0) {
+    newState.invulnFrames = newState.invulnFrames - 1
   }
 
   // Dash cooldown
@@ -73,7 +87,8 @@ export function tick(state: GameState, input: InputState): GameState {
     // Dash just completed — create scar and check kills
     if (wasDashing && !newState.player.isDashing && newState.player.dashStart && newState.player.dashEnd) {
       newState.scars = [...newState.scars, createScar(newState.player.dashStart, newState.player.dashEnd)]
-      scarGraceFrames = 20  // ~333ms invulnerability after dash to move away from scar
+      // Reset trail position after dash so trail continues from new position
+      newState.lastTrailPos = { ...newState.player.position }
 
       const killed = checkDashKills(
         newState.player.dashStart,
@@ -91,19 +106,39 @@ export function tick(state: GameState, input: InputState): GameState {
     }
   } else {
     // Move player
+    const prevPos = { ...newState.player.position }
     newState.player = movePlayer(newState.player, input)
-  }
 
-  // Check scar collision (skip during dash and brief grace after dash)
-  if (scarGraceFrames > 0) {
-    scarGraceFrames--
-  } else if (!newState.player.isDashing && newState.scars.length > 0) {
-    if (checkScarCollision(newState.player.position, PLAYER_RADIUS, newState.scars)) {
-      return { ...newState, status: 'dead' }
+    // Leave trail scar when player moves far enough
+    const moved = input.moveX !== 0 || input.moveY !== 0
+    if (moved) {
+      if (!newState.lastTrailPos) {
+        // First movement — start tracking
+        newState.lastTrailPos = prevPos
+      } else {
+        const dist = distance(newState.player.position, newState.lastTrailPos)
+        if (dist >= TRAIL_MIN_DISTANCE) {
+          newState.scars = [...newState.scars, createScar(newState.lastTrailPos, { ...newState.player.position })]
+          newState.lastTrailPos = { ...newState.player.position }
+        }
+      }
     }
   }
 
-  // Check enemy collision (skip during dash)
+  // Check scar collision (skip during dash and invulnerability)
+  if (!newState.player.isDashing && newState.invulnFrames <= 0 && newState.scars.length > TRAIL_SAFE_SEGMENTS) {
+    // Only check older scars (skip the newest ones which are the player's current trail)
+    const checkableScars = newState.scars.slice(0, newState.scars.length - TRAIL_SAFE_SEGMENTS)
+    if (checkScarCollision(newState.player.position, PLAYER_RADIUS, checkableScars)) {
+      newState.lives = newState.lives - 1
+      newState.invulnFrames = INVULN_FRAMES
+      if (newState.lives <= 0) {
+        return { ...newState, status: 'dead' }
+      }
+    }
+  }
+
+  // Check enemy collision (skip during dash) — instant death
   if (!newState.player.isDashing) {
     const enemyHit = checkEnemyCollision(newState.player.position, PLAYER_RADIUS, newState.enemies)
     if (enemyHit >= 0) {

@@ -1,7 +1,7 @@
 import type { GameState } from './types'
 import { getScarOpacity } from './scar'
 import { getTimerColor } from './timer'
-import { CANVAS_SIZE, ARENA_CENTER, ARENA_RADIUS, COLORS, SCREEN_SHAKE_DURATION, SCREEN_SHAKE_INTENSITY } from './constants'
+import { CANVAS_SIZE, ARENA_CENTER, ARENA_RADIUS, COLORS, SCREEN_SHAKE_DURATION, SCREEN_SHAKE_INTENSITY, PLAYER_MAX_LIVES } from './constants'
 
 let shakeUntil = 0
 
@@ -75,33 +75,39 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState): void {
 
   // Player shard
   const p = state.player
-  ctx.save()
-  ctx.translate(p.position.x, p.position.y)
-  ctx.rotate(p.rotation)
+  const isInvuln = state.invulnFrames > 0
+  // Flash effect during invulnerability
+  const showPlayer = !isInvuln || Math.floor(now / 80) % 2 === 0
 
-  // Glow
-  ctx.shadowColor = COLORS.playerGlow
-  ctx.shadowBlur = p.isDashing ? 20 : 8
+  if (showPlayer) {
+    ctx.save()
+    ctx.translate(p.position.x, p.position.y)
+    ctx.rotate(p.rotation)
 
-  // Shard shape (asymmetric polygon)
-  const scaleX = p.isDashing ? 1.8 : 1
-  const scaleY = p.isDashing ? 0.6 : 1
-  ctx.scale(scaleX, scaleY)
+    // Glow
+    ctx.shadowColor = COLORS.playerGlow
+    ctx.shadowBlur = p.isDashing ? 20 : 8
 
-  ctx.fillStyle = COLORS.player
-  ctx.globalAlpha = 0.9
-  ctx.beginPath()
-  ctx.moveTo(14, 0)
-  ctx.lineTo(-4, -8)
-  ctx.lineTo(-10, -3)
-  ctx.lineTo(-8, 4)
-  ctx.lineTo(-2, 9)
-  ctx.closePath()
-  ctx.fill()
+    // Shard shape (asymmetric polygon)
+    const sx = p.isDashing ? 1.8 : 1
+    const sy = p.isDashing ? 0.6 : 1
+    ctx.scale(sx, sy)
 
-  ctx.shadowBlur = 0
-  ctx.globalAlpha = 1
-  ctx.restore()
+    ctx.fillStyle = COLORS.player
+    ctx.globalAlpha = 0.9
+    ctx.beginPath()
+    ctx.moveTo(14, 0)
+    ctx.lineTo(-4, -8)
+    ctx.lineTo(-10, -3)
+    ctx.lineTo(-8, 4)
+    ctx.lineTo(-2, 9)
+    ctx.closePath()
+    ctx.fill()
+
+    ctx.shadowBlur = 0
+    ctx.globalAlpha = 1
+    ctx.restore()
+  }
 
   // HUD: Timer
   if (state.status === 'playing') {
@@ -111,6 +117,12 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState): void {
     ctx.textAlign = 'center'
     ctx.fillStyle = timerColor
     ctx.fillText(timerText, ARENA_CENTER.x, 40)
+
+    // Lives (hearts/pips)
+    ctx.font = '16px monospace'
+    ctx.fillStyle = '#ec4899'
+    const livesText = '♥'.repeat(state.lives) + '♡'.repeat(PLAYER_MAX_LIVES - state.lives)
+    ctx.fillText(livesText, ARENA_CENTER.x, 65)
 
     // Kills count
     ctx.font = '14px monospace'

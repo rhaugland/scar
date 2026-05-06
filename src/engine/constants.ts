@@ -28,6 +28,11 @@ export const SPAWN_RATES = [
 
 export const GRACE_PERIOD = 1.5
 
+export const PLAYER_MAX_LIVES = 3
+export const TRAIL_MIN_DISTANCE = 15  // min px between trail scar segments
+export const INVULN_FRAMES = 60  // ~1 second of invulnerability after scar hit
+export const TRAIL_SAFE_SEGMENTS = 3  // don't check collision against the N newest trail scars
+
 export const SCREEN_SHAKE_DURATION = 100
 export const SCREEN_SHAKE_INTENSITY = 2
 
