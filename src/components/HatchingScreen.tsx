@@ -82,10 +82,10 @@ export function HatchingScreen({ scars, level, kills, lineColor, onAddMonster, o
           offsetX: CANVAS_WIDTH / 2,
           offsetY: CANVAS_HEIGHT / 2,
           scale: 0.8,
+          level: monster!.level,
           animate: phase === 'drawing',
           animationProgress: drawProgress,
           showEyes: phase === 'reveal',
-          showStars: true,
           showAura: phase === 'reveal',
           time: Date.now(),
         })

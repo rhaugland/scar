@@ -31,8 +31,8 @@ export function MonsterDetail({ monster, onRelease, onBack }: MonsterDetailProps
         offsetX: CANVAS_WIDTH / 2,
         offsetY: CANVAS_HEIGHT / 2 - 40,
         scale: 0.7,
+        level: monster.level,
         showEyes: true,
-        showStars: true,
         showAura: true,
         time: Date.now(),
       })

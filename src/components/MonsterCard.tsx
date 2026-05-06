@@ -31,8 +31,8 @@ export function MonsterCard({ monster, onClick }: MonsterCardProps) {
         offsetX: CARD_SIZE / 2,
         offsetY: CARD_SIZE / 2,
         scale: 0.25,
+        level: monster.level,
         showEyes: true,
-        showStars: true,
         showAura: false,
         time: Date.now(),
       })
