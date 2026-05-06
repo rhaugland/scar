@@ -2,11 +2,11 @@
 
 import { useRef, useEffect, useCallback, useState } from 'react'
 import type { GameState } from '@/engine/types'
-import { createGameState, startGame, tick, togglePause, changeLineColor } from '@/engine/game'
+import { createGameState, startGame, tick, togglePause, changeLineColor, nextLevel } from '@/engine/game'
 import { render, renderDeathScreen, triggerScreenShake } from '@/engine/renderer'
 import { KeyboardInput } from '@/input/keyboard'
 import { TouchInput } from '@/input/touch'
-import { CANVAS_SIZE } from '@/engine/constants'
+import { CANVAS_WIDTH, CANVAS_HEIGHT } from '@/engine/constants'
 import { getHighScore, setHighScore } from '@/lib/storage'
 
 interface GameCanvasProps {
@@ -19,7 +19,7 @@ export function GameCanvas({ onDeath, onStart }: GameCanvasProps) {
   const stateRef = useRef<GameState>(createGameState(getHighScore()))
   const inputRef = useRef<KeyboardInput | TouchInput | null>(null)
   const rafRef = useRef<number>(0)
-  const [gameStatus, setGameStatus] = useState<'idle' | 'playing' | 'paused' | 'dead'>('idle')
+  const [gameStatus, setGameStatus] = useState<'idle' | 'playing' | 'paused' | 'dead' | 'level-complete'>('idle')
 
   const gameLoop = useCallback(() => {
     const canvas = canvasRef.current
@@ -56,13 +56,21 @@ export function GameCanvas({ onDeath, onStart }: GameCanvasProps) {
         return
       }
 
+      if (newState.status === 'level-complete') {
+        setGameStatus('level-complete')
+        render(ctx, newState)
+        return // stop RAF, wait for click
+      }
+
       render(ctx, newState)
     } else if (state.status === 'paused') {
-      // Still render but with pause overlay
       render(ctx, state)
-      return // stop RAF while paused
+      return
     } else if (state.status === 'dead') {
       renderDeathScreen(ctx, state)
+      return
+    } else if (state.status === 'level-complete') {
+      render(ctx, state)
       return
     }
 
@@ -139,19 +147,29 @@ export function GameCanvas({ onDeath, onStart }: GameCanvasProps) {
     }
   }, [])
 
+  const handleNextLevel = useCallback(() => {
+    stateRef.current = nextLevel(stateRef.current)
+    setGameStatus('playing')
+    inputRef.current?.disable()
+    rafRef.current = requestAnimationFrame(gameLoop)
+    setTimeout(() => { inputRef.current?.enable() }, 300)
+  }, [gameLoop])
+
   const handleCanvasClick = useCallback(() => {
     if (gameStatus === 'idle') {
       handleStart()
     } else if (gameStatus === 'dead') {
       handleRestart()
+    } else if (gameStatus === 'level-complete') {
+      handleNextLevel()
     }
-  }, [gameStatus, handleStart, handleRestart])
+  }, [gameStatus, handleStart, handleRestart, handleNextLevel])
 
   return (
     <canvas
       ref={canvasRef}
-      width={CANVAS_SIZE}
-      height={CANVAS_SIZE}
+      width={CANVAS_WIDTH}
+      height={CANVAS_HEIGHT}
       className="w-full h-full max-w-[700px] max-h-[700px] aspect-square cursor-crosshair"
       onClick={handleCanvasClick}
       tabIndex={0}

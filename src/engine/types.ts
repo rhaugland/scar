@@ -29,13 +29,23 @@ export interface Player {
   dashProgress: number
 }
 
-export type GameStatus = 'idle' | 'playing' | 'paused' | 'dead'
+export interface Goal {
+  position: Vec2
+  radius: number
+  moving: boolean
+  speed: number
+  angle: number  // for circular floating motion
+}
+
+export type GameStatus = 'idle' | 'playing' | 'paused' | 'dead' | 'level-complete'
 
 export interface GameState {
   status: GameStatus
   player: Player
   scars: Scar[]
   enemies: Enemy[]
+  goal: Goal
+  level: number
   elapsed: number
   score: number
   kills: number

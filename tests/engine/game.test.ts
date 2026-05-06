@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { createGameState, tick, startGame, togglePause, changeLineColor } from '@/engine/game'
+import { createGameState, tick, startGame, togglePause, changeLineColor, nextLevel } from '@/engine/game'
 import { createScar } from '@/engine/scar'
-import { ARENA_CENTER, PLAYER_MAX_LIVES, LINE_COLORS } from '@/engine/constants'
+import { PLAYER_MAX_LIVES, LINE_COLORS } from '@/engine/constants'
 
 describe('game', () => {
   it('createGameState returns idle state with 5 lives', () => {
@@ -12,6 +12,7 @@ describe('game', () => {
     expect(state.enemies).toEqual([])
     expect(state.kills).toBe(0)
     expect(state.lives).toBe(PLAYER_MAX_LIVES)
+    expect(state.level).toBe(1)
   })
 
   it('tick with idle status does nothing', () => {
@@ -25,10 +26,10 @@ describe('game', () => {
     const state = startGame(createGameState(0))
     const input = { moveX: 1, moveY: 0, dashDirection: null }
     const next = tick(state, input)
-    expect(next.player.position.x).toBeGreaterThan(ARENA_CENTER.x)
+    expect(next.player.position.x).toBeGreaterThan(state.player.position.x)
   })
 
-  it('tick increases elapsed time when playing', () => {
+  it('tick increases elapsed time', () => {
     const state = startGame(createGameState(0))
     const input = { moveX: 0, moveY: 0, dashDirection: null }
     const next = tick(state, input)
@@ -54,9 +55,9 @@ describe('game', () => {
     expect(state.scars.length).toBeGreaterThan(0)
   })
 
-  it('scar hit removes a life instead of instant death', () => {
+  it('scar hit removes a life', () => {
     let state = startGame(createGameState(0))
-    const dangerScar = createScar({ x: 360, y: 350 }, { x: 380, y: 350 })
+    const dangerScar = createScar({ x: 60, y: 350 }, { x: 80, y: 350 })
     const dummyScars = [
       createScar({ x: 0, y: 0 }, { x: 1, y: 0 }),
       createScar({ x: 0, y: 0 }, { x: 1, y: 0 }),
@@ -84,5 +85,15 @@ describe('game', () => {
     expect(state.lineColor).toBe(LINE_COLORS[0])
     state = changeLineColor(state)
     expect(state.lineColor).toBe(LINE_COLORS[1])
+  })
+
+  it('nextLevel advances level and resets arena', () => {
+    let state = startGame(createGameState(0))
+    state = { ...state, status: 'level-complete' }
+    state = nextLevel(state)
+    expect(state.level).toBe(2)
+    expect(state.status).toBe('playing')
+    expect(state.scars).toEqual([])
+    expect(state.enemies).toEqual([])
   })
 })

@@ -9,6 +9,7 @@ describe('scar', () => {
     expect(scar.end).toEqual({ x: 200, y: 200 })
     expect(scar.width).toBe(SCAR_WIDTH)
     expect(scar.createdAt).toBeGreaterThan(0)
+    expect(scar.color).toBe('#ec4899')
   })
 
   it('getScarOpacity returns 1 for fresh scars', () => {

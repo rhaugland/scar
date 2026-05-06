@@ -3,13 +3,14 @@
 interface DeathScreenProps {
   score: number
   kills: number
+  level: number
   highScore: number
   isNewHighScore: boolean
   onRestart: () => void
   onShare: () => void
 }
 
-export function DeathScreen({ score, kills, highScore, isNewHighScore, onRestart, onShare }: DeathScreenProps) {
+export function DeathScreen({ score, kills, level, highScore, isNewHighScore, onRestart, onShare }: DeathScreenProps) {
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-center z-10 pointer-events-none">
       <div className="pointer-events-auto flex flex-col items-center gap-4">
@@ -19,10 +20,10 @@ export function DeathScreen({ score, kills, highScore, isNewHighScore, onRestart
           </p>
         )}
         <p className="text-white font-mono text-4xl font-bold">
-          {score.toFixed(1)}s
+          Level {level}
         </p>
         <p className="text-white/50 font-mono text-sm">
-          {kills} kills
+          {score.toFixed(1)}s | {kills} kills
         </p>
         <div className="flex gap-4 mt-6">
           <button

@@ -50,6 +50,7 @@ export default function Home() {
         <DeathScreen
           score={deathState.score}
           kills={deathState.kills}
+          level={deathState.level}
           highScore={deathState.highScore}
           isNewHighScore={deathState.score >= deathState.highScore}
           onRestart={handleRestart}

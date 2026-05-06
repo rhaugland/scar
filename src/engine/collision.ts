@@ -1,6 +1,6 @@
-import type { Vec2, Scar, Enemy } from './types'
+import type { Vec2, Scar, Enemy, Goal } from './types'
 import { distance, pointToSegmentDistance } from './vec2'
-import { ARENA_CENTER, ARENA_RADIUS } from './constants'
+import { CANVAS_WIDTH, CANVAS_HEIGHT } from './constants'
 
 export function checkScarCollision(playerPos: Vec2, playerRadius: number, scars: Scar[]): boolean {
   for (const scar of scars) {
@@ -37,16 +37,14 @@ export function checkDashKills(dashStart: Vec2, dashEnd: Vec2, killRadius: numbe
   return killed
 }
 
-export function clampToBoundary(position: Vec2, playerRadius: number): Vec2 {
-  const dist = distance(position, ARENA_CENTER)
-  const maxDist = ARENA_RADIUS - playerRadius
-  if (dist <= maxDist) return position
+export function checkGoalReached(playerPos: Vec2, playerRadius: number, goal: Goal): boolean {
+  const dist = distance(playerPos, goal.position)
+  return dist < playerRadius + goal.radius
+}
 
-  const dx = position.x - ARENA_CENTER.x
-  const dy = position.y - ARENA_CENTER.y
-  const scale = maxDist / dist
+export function clampToBoundary(position: Vec2, playerRadius: number): Vec2 {
   return {
-    x: ARENA_CENTER.x + dx * scale,
-    y: ARENA_CENTER.y + dy * scale,
+    x: Math.max(playerRadius, Math.min(CANVAS_WIDTH - playerRadius, position.x)),
+    y: Math.max(playerRadius, Math.min(CANVAS_HEIGHT - playerRadius, position.y)),
   }
 }

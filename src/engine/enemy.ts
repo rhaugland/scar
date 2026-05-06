@@ -1,18 +1,30 @@
 import type { Enemy, Vec2 } from './types'
 import { sub, normalize, add, scale } from './vec2'
-import { ARENA_CENTER, ARENA_RADIUS, ENEMY_RADIUS, ENEMY_SPEED, SPAWN_RATES } from './constants'
+import { CANVAS_WIDTH, CANVAS_HEIGHT, ENEMY_RADIUS } from './constants'
 
-export function spawnEnemy(id: number): Enemy {
-  const angle = Math.random() * Math.PI * 2
-  const position: Vec2 = {
-    x: ARENA_CENTER.x + Math.cos(angle) * ARENA_RADIUS,
-    y: ARENA_CENTER.y + Math.sin(angle) * ARENA_RADIUS,
+export function spawnEnemy(id: number, speed: number): Enemy {
+  // Spawn from a random edge of the rectangle
+  const edge = Math.floor(Math.random() * 4)
+  let position: Vec2
+  switch (edge) {
+    case 0: // top
+      position = { x: Math.random() * CANVAS_WIDTH, y: -ENEMY_RADIUS }
+      break
+    case 1: // right
+      position = { x: CANVAS_WIDTH + ENEMY_RADIUS, y: Math.random() * CANVAS_HEIGHT }
+      break
+    case 2: // bottom
+      position = { x: Math.random() * CANVAS_WIDTH, y: CANVAS_HEIGHT + ENEMY_RADIUS }
+      break
+    default: // left
+      position = { x: -ENEMY_RADIUS, y: Math.random() * CANVAS_HEIGHT }
+      break
   }
   return {
     id,
     position,
     radius: ENEMY_RADIUS,
-    speed: ENEMY_SPEED,
+    speed,
     active: true,
   }
 }
@@ -24,11 +36,4 @@ export function updateEnemies(enemies: Enemy[], playerPos: Vec2): Enemy[] {
     const newPos = add(enemy.position, scale(direction, enemy.speed))
     return { ...enemy, position: newPos }
   })
-}
-
-export function getSpawnInterval(elapsedSeconds: number): number {
-  for (const rate of SPAWN_RATES) {
-    if (elapsedSeconds < rate.until) return rate.interval
-  }
-  return SPAWN_RATES[SPAWN_RATES.length - 1].interval
 }

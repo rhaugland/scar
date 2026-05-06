@@ -1,11 +1,11 @@
 import type { Player, InputState, Vec2 } from './types'
 import { add, scale, normalize, length } from './vec2'
-import { ARENA_CENTER, PLAYER_RADIUS, PLAYER_SPEED, DASH_DISTANCE, DASH_DURATION } from './constants'
+import { PLAYER_RADIUS, PLAYER_SPEED, DASH_DISTANCE, DASH_DURATION } from './constants'
 import { clampToBoundary } from './collision'
 
 export function createPlayer(): Player {
   return {
-    position: { ...ARENA_CENTER },
+    position: { x: 50, y: 350 },
     radius: PLAYER_RADIUS,
     rotation: 0,
     isDashing: false,

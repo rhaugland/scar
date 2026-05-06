@@ -1,6 +1,6 @@
 import type { GameState } from './types'
 import { getScarOpacity } from './scar'
-import { CANVAS_SIZE, ARENA_CENTER, ARENA_RADIUS, COLORS, SCREEN_SHAKE_DURATION, SCREEN_SHAKE_INTENSITY, PLAYER_MAX_LIVES } from './constants'
+import { CANVAS_WIDTH, CANVAS_HEIGHT, COLORS, SCREEN_SHAKE_DURATION, SCREEN_SHAKE_INTENSITY, PLAYER_MAX_LIVES } from './constants'
 
 let shakeUntil = 0
 
@@ -11,7 +11,7 @@ export function triggerScreenShake(): void {
 export function render(ctx: CanvasRenderingContext2D, state: GameState): void {
   const now = Date.now()
 
-  // Screen shake offset
+  // Screen shake
   let offsetX = 0, offsetY = 0
   if (now < shakeUntil) {
     offsetX = (Math.random() - 0.5) * SCREEN_SHAKE_INTENSITY * 2
@@ -23,23 +23,19 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState): void {
 
   // Clear
   ctx.fillStyle = COLORS.background
-  ctx.fillRect(-10, -10, CANVAS_SIZE + 20, CANVAS_SIZE + 20)
+  ctx.fillRect(-10, -10, CANVAS_WIDTH + 20, CANVAS_HEIGHT + 20)
 
-  // Arena rim (pulsing)
-  const pulse = 0.15 + Math.sin(now / 1000) * 0.05
-  ctx.strokeStyle = COLORS.arenaRim
-  ctx.globalAlpha = pulse
+  // Border
+  ctx.strokeStyle = COLORS.border
+  ctx.globalAlpha = 0.2
   ctx.lineWidth = 2
-  ctx.beginPath()
-  ctx.arc(ARENA_CENTER.x, ARENA_CENTER.y, ARENA_RADIUS, 0, Math.PI * 2)
-  ctx.stroke()
+  ctx.strokeRect(1, 1, CANVAS_WIDTH - 2, CANVAS_HEIGHT - 2)
   ctx.globalAlpha = 1
 
   // Scars
   for (const scar of state.scars) {
     const opacity = getScarOpacity(scar.createdAt, now)
 
-    // Glow layer (uses scar's own color)
     ctx.strokeStyle = scar.color
     ctx.globalAlpha = opacity * 0.5
     ctx.lineWidth = scar.width
@@ -49,7 +45,6 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState): void {
     ctx.lineTo(scar.end.x, scar.end.y)
     ctx.stroke()
 
-    // Core layer
     ctx.strokeStyle = '#ffffff'
     ctx.globalAlpha = opacity * 0.8
     ctx.lineWidth = 2
@@ -60,6 +55,29 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState): void {
 
     ctx.globalAlpha = 1
   }
+
+  // Goal
+  const g = state.goal
+  const goalPulse = 0.6 + Math.sin(now / 200) * 0.4
+  ctx.shadowColor = COLORS.goalGlow
+  ctx.shadowBlur = 15
+
+  ctx.fillStyle = COLORS.goal
+  ctx.globalAlpha = goalPulse
+  ctx.beginPath()
+  ctx.arc(g.position.x, g.position.y, g.radius, 0, Math.PI * 2)
+  ctx.fill()
+
+  // Goal ring
+  ctx.strokeStyle = COLORS.goalGlow
+  ctx.globalAlpha = 0.3
+  ctx.lineWidth = 2
+  ctx.beginPath()
+  ctx.arc(g.position.x, g.position.y, g.radius + 5 + Math.sin(now / 300) * 3, 0, Math.PI * 2)
+  ctx.stroke()
+
+  ctx.shadowBlur = 0
+  ctx.globalAlpha = 1
 
   // Enemies
   for (const enemy of state.enemies) {
@@ -75,7 +93,6 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState): void {
   // Player shard
   const p = state.player
   const isInvuln = state.invulnFrames > 0
-  // Flash effect during invulnerability
   const showPlayer = !isInvuln || Math.floor(now / 80) % 2 === 0
 
   if (showPlayer) {
@@ -83,11 +100,9 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState): void {
     ctx.translate(p.position.x, p.position.y)
     ctx.rotate(p.rotation)
 
-    // Glow
     ctx.shadowColor = COLORS.playerGlow
     ctx.shadowBlur = p.isDashing ? 20 : 8
 
-    // Shard shape (asymmetric polygon)
     const sx = p.isDashing ? 1.8 : 1
     const sy = p.isDashing ? 0.6 : 1
     ctx.scale(sx, sy)
@@ -110,51 +125,69 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState): void {
 
   // HUD
   if (state.status === 'playing' || state.status === 'paused') {
-    // Elapsed time
-    ctx.font = 'bold 28px monospace'
-    ctx.textAlign = 'center'
+    // Level
+    ctx.font = 'bold 20px monospace'
+    ctx.textAlign = 'left'
     ctx.fillStyle = '#ffffff'
-    ctx.fillText(state.elapsed.toFixed(1) + 's', ARENA_CENTER.x, 40)
+    ctx.fillText(`LVL ${state.level}`, 12, 28)
+
+    // Elapsed time
+    ctx.font = '14px monospace'
+    ctx.fillStyle = '#ffffff66'
+    ctx.fillText(state.elapsed.toFixed(1) + 's', 12, 48)
 
     // Lives (hearts)
     ctx.font = '16px monospace'
+    ctx.textAlign = 'right'
     ctx.fillStyle = state.lineColor
     const livesText = '♥'.repeat(state.lives) + '♡'.repeat(PLAYER_MAX_LIVES - state.lives)
-    ctx.fillText(livesText, ARENA_CENTER.x, 65)
+    ctx.fillText(livesText, CANVAS_WIDTH - 12, 28)
 
-    // Kills count
+    // Kills
     ctx.font = '14px monospace'
     ctx.fillStyle = '#ffffff66'
-    ctx.fillText(`${state.kills} kills`, ARENA_CENTER.x, CANVAS_SIZE - 20)
+    ctx.textAlign = 'center'
+    ctx.fillText(`${state.kills} kills`, CANVAS_WIDTH / 2, CANVAS_HEIGHT - 12)
 
-    // Current line color indicator
+    // Current line color bar
     ctx.fillStyle = state.lineColor
-    ctx.fillRect(ARENA_CENTER.x - 10, CANVAS_SIZE - 35, 20, 3)
+    ctx.fillRect(CANVAS_WIDTH / 2 - 10, CANVAS_HEIGHT - 28, 20, 3)
   }
 
   // Pause overlay
   if (state.status === 'paused') {
     ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'
-    ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE)
+    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT)
 
     ctx.font = 'bold 36px monospace'
     ctx.textAlign = 'center'
     ctx.fillStyle = '#ffffff'
-    ctx.fillText('PAUSED', ARENA_CENTER.x, ARENA_CENTER.y - 30)
+    ctx.fillText('PAUSED', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 30)
 
     ctx.font = '16px monospace'
     ctx.fillStyle = '#ffffff88'
-    ctx.fillText('SPACE to resume', ARENA_CENTER.x, ARENA_CENTER.y + 10)
-    ctx.fillText('C to change line color', ARENA_CENTER.x, ARENA_CENTER.y + 35)
+    ctx.fillText('SPACE to resume', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 10)
+    ctx.fillText('C to change line color', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 35)
 
-    // Color preview
     ctx.fillStyle = state.lineColor
     ctx.beginPath()
-    ctx.arc(ARENA_CENTER.x, ARENA_CENTER.y + 70, 12, 0, Math.PI * 2)
+    ctx.arc(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 70, 12, 0, Math.PI * 2)
     ctx.fill()
-    ctx.strokeStyle = '#ffffff44'
-    ctx.lineWidth = 1
-    ctx.stroke()
+  }
+
+  // Level complete overlay
+  if (state.status === 'level-complete') {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'
+    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT)
+
+    ctx.font = 'bold 36px monospace'
+    ctx.textAlign = 'center'
+    ctx.fillStyle = COLORS.goal
+    ctx.fillText(`LEVEL ${state.level} CLEAR`, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 20)
+
+    ctx.font = '16px monospace'
+    ctx.fillStyle = '#ffffff88'
+    ctx.fillText('click for next level', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 20)
   }
 
   ctx.restore()
@@ -163,7 +196,6 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState): void {
 export function renderDeathScreen(ctx: CanvasRenderingContext2D, state: GameState): void {
   render(ctx, state)
 
-  // Dim overlay — score/kills shown by React DeathScreen component
   ctx.fillStyle = 'rgba(0, 0, 0, 0.4)'
-  ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE)
+  ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT)
 }

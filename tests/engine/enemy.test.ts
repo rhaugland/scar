@@ -1,28 +1,29 @@
 import { describe, it, expect } from 'vitest'
-import { spawnEnemy, updateEnemies, getSpawnInterval } from '@/engine/enemy'
-import { ARENA_CENTER, ARENA_RADIUS, ENEMY_SPEED } from '@/engine/constants'
+import { spawnEnemy, updateEnemies } from '@/engine/enemy'
+import { CANVAS_WIDTH, CANVAS_HEIGHT, ENEMY_RADIUS, ENEMY_SPEED } from '@/engine/constants'
 
 describe('enemy', () => {
-  it('spawnEnemy creates enemy on arena rim', () => {
-    const enemy = spawnEnemy(0)
-    const dist = Math.sqrt(
-      (enemy.position.x - ARENA_CENTER.x) ** 2 +
-      (enemy.position.y - ARENA_CENTER.y) ** 2
-    )
-    expect(dist).toBeCloseTo(ARENA_RADIUS, 0)
+  it('spawnEnemy creates enemy on canvas edge', () => {
+    const enemy = spawnEnemy(0, ENEMY_SPEED)
     expect(enemy.active).toBe(true)
     expect(enemy.id).toBe(0)
+    // Should be outside or on the canvas edge
+    const onEdge =
+      enemy.position.x <= 0 || enemy.position.x >= CANVAS_WIDTH ||
+      enemy.position.y <= 0 || enemy.position.y >= CANVAS_HEIGHT
+    expect(onEdge).toBe(true)
   })
 
   it('updateEnemies moves enemies toward player', () => {
+    const playerPos = { x: 350, y: 350 }
     const enemy = {
       id: 0,
-      position: { x: ARENA_CENTER.x + 100, y: ARENA_CENTER.y },
-      radius: 10,
+      position: { x: 450, y: 350 },
+      radius: ENEMY_RADIUS,
       speed: ENEMY_SPEED,
       active: true,
     }
-    const updated = updateEnemies([enemy], ARENA_CENTER)
+    const updated = updateEnemies([enemy], playerPos)
     expect(updated[0].position.x).toBeLessThan(enemy.position.x)
   })
 
@@ -30,18 +31,11 @@ describe('enemy', () => {
     const enemy = {
       id: 0,
       position: { x: 500, y: 350 },
-      radius: 10,
+      radius: ENEMY_RADIUS,
       speed: ENEMY_SPEED,
       active: false,
     }
-    const updated = updateEnemies([enemy], ARENA_CENTER)
+    const updated = updateEnemies([enemy], { x: 350, y: 350 })
     expect(updated[0].position).toEqual(enemy.position)
-  })
-
-  it('getSpawnInterval returns correct rate for elapsed time', () => {
-    expect(getSpawnInterval(5)).toBe(2.0)
-    expect(getSpawnInterval(20)).toBe(1.5)
-    expect(getSpawnInterval(40)).toBe(1.0)
-    expect(getSpawnInterval(90)).toBe(0.7)
   })
 })
