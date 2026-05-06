@@ -29,7 +29,7 @@ export function MonsterDetail({ monster, onRelease, onBack }: MonsterDetailProps
       renderMonster(ctx!, {
         scars: monster.scars,
         offsetX: CANVAS_WIDTH / 2,
-        offsetY: CANVAS_HEIGHT / 2 - 40,
+        offsetY: CANVAS_HEIGHT / 2 - 60,
         scale: 0.7,
         level: monster.level,
         showEyes: true,
@@ -45,15 +45,29 @@ export function MonsterDetail({ monster, onRelease, onBack }: MonsterDetailProps
   }, [monster])
 
   return (
-    <div className="fixed inset-0 z-30 bg-black flex flex-col items-center">
-      <canvas
-        ref={canvasRef}
-        width={CANVAS_WIDTH}
-        height={CANVAS_HEIGHT}
-        className="w-full max-w-[700px] aspect-square"
-      />
+    <div className="fixed inset-0 z-40 bg-black flex flex-col items-center">
+      {/* Back button — always visible at top */}
+      <div className="w-full max-w-[700px] flex justify-start p-4">
+        <button
+          onClick={onBack}
+          className="text-white/50 font-mono text-sm hover:text-white/80 transition-colors"
+        >
+          &larr; BACK
+        </button>
+      </div>
 
-      <div className="flex flex-col items-center gap-3 mt-4">
+      {/* Canvas */}
+      <div className="flex-1 relative w-full max-w-[700px]">
+        <canvas
+          ref={canvasRef}
+          width={CANVAS_WIDTH}
+          height={CANVAS_HEIGHT}
+          className="w-full aspect-square max-h-[60vh]"
+        />
+      </div>
+
+      {/* Stats overlay at bottom */}
+      <div className="flex flex-col items-center gap-2 pb-20 pt-4">
         <p className="text-white font-mono text-2xl font-bold tracking-wider">
           {monster.name}
         </p>
@@ -68,20 +82,12 @@ export function MonsterDetail({ monster, onRelease, onBack }: MonsterDetailProps
           {new Date(monster.createdAt).toLocaleDateString()}
         </p>
 
-        <div className="flex gap-4 mt-4">
-          <button
-            onClick={onBack}
-            className="border border-white/30 text-white/60 font-mono text-sm px-6 py-2 hover:bg-white/10 transition-colors"
-          >
-            BACK
-          </button>
-          <button
-            onClick={onRelease}
-            className="border border-red-500/40 text-red-400/60 font-mono text-sm px-6 py-2 hover:bg-red-500/10 transition-colors"
-          >
-            RELEASE
-          </button>
-        </div>
+        <button
+          onClick={onRelease}
+          className="border border-red-500/40 text-red-400/60 font-mono text-sm px-6 py-2 mt-3 hover:bg-red-500/10 transition-colors"
+        >
+          RELEASE
+        </button>
       </div>
     </div>
   )

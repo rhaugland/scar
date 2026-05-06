@@ -10,10 +10,18 @@ function seededRandom(seed: number): () => number {
   }
 }
 
-function hashScars(scars: Scar[]): number {
-  let hash = 0
-  for (const s of scars) {
-    hash = ((hash << 5) - hash) + Math.floor(s.start.x * 7 + s.start.y * 13 + s.end.x * 19 + s.end.y * 23)
+function hashScars(scars: Scar[], extraSeed = 0): number {
+  let hash = extraSeed || scars.length * 2654435761
+  for (let i = 0; i < scars.length; i++) {
+    const s = scars[i]
+    // Mix in position, color, time, and index for maximum variation
+    hash ^= Math.floor(s.start.x * 73856093) ^ Math.floor(s.start.y * 19349663)
+    hash ^= Math.floor(s.end.x * 83492791) ^ Math.floor(s.end.y * 67867979)
+    hash ^= s.createdAt ^ (i * 2246822519)
+    // Mix in color character codes
+    for (let c = 0; c < s.color.length; c++) {
+      hash = ((hash << 5) - hash) + s.color.charCodeAt(c)
+    }
     hash = hash & hash
   }
   return Math.abs(hash) || 1
