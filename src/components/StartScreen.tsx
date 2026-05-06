@@ -1,7 +1,5 @@
 'use client'
 
-import Link from 'next/link'
-
 interface StartScreenProps {
   highScore: number
   onStart: () => void
@@ -26,14 +24,6 @@ export function StartScreen({ highScore, onStart, monsterCount }: StartScreenPro
         <p className="text-white/40 font-mono text-xs mt-6">
           BEST: {highScore.toFixed(1)}s
         </p>
-      )}
-      {monsterCount > 0 && (
-        <Link
-          href="/collection"
-          className="pointer-events-auto text-pink-400/60 font-mono text-xs mt-4 border border-pink-500/30 px-4 py-1.5 hover:bg-pink-500/10 transition-colors"
-        >
-          COLLECTION ({monsterCount})
-        </Link>
       )}
     </div>
   )
