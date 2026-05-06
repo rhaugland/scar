@@ -1,4 +1,4 @@
-import type { Scar, Vec2 } from './types'
+import type { Scar, Vec2, CreatureForm } from './types'
 
 // --- Seeded PRNG ---
 
@@ -69,8 +69,6 @@ interface CreatureSkeleton {
   nodes: SkeletonNode[]
   edges: SkeletonEdge[]
 }
-
-type CreatureForm = 'biped' | 'quadruped' | 'serpent' | 'winged' | 'spider' | 'jellyfish'
 
 function pickForm(rng: () => number): CreatureForm {
   const forms: CreatureForm[] = ['biped', 'quadruped', 'serpent', 'winged', 'spider', 'jellyfish']
@@ -364,10 +362,23 @@ function generateSkeleton(form: CreatureForm, level: number, rng: () => number):
   return { nodes, edges }
 }
 
+export function generateSkeletonFromSeed(
+  seed: number,
+  form: CreatureForm,
+  level: number,
+): CreatureSkeleton {
+  const rng = seededRandom(seed + 2)
+  return generateSkeleton(form, level, rng)
+}
+
 // --- Render ---
 
 export interface RenderMonsterOptions {
-  scars: Scar[]
+  scars?: Scar[]
+  seed?: number
+  form?: CreatureForm
+  primaryColor?: string
+  secondaryColor?: string
   offsetX: number
   offsetY: number
   scale: number
@@ -383,6 +394,10 @@ export interface RenderMonsterOptions {
 export function renderMonster(ctx: CanvasRenderingContext2D, options: RenderMonsterOptions): void {
   const {
     scars,
+    seed: seedOpt,
+    form: formOpt,
+    primaryColor: primaryOpt,
+    secondaryColor: secondaryOpt,
     offsetX,
     offsetY,
     scale,
@@ -394,16 +409,28 @@ export function renderMonster(ctx: CanvasRenderingContext2D, options: RenderMons
     time = Date.now(),
   } = options
 
-  if (scars.length === 0) return
+  let seed: number
+  let primaryColor: string
+  let secondaryColor: string
+  let skeleton: CreatureSkeleton
 
-  const seed = hashScars(scars)
+  if (seedOpt != null) {
+    seed = seedOpt
+    primaryColor = primaryOpt || '#ec4899'
+    secondaryColor = secondaryOpt || '#ffffff'
+    const form = formOpt || pickForm(seededRandom(seed + 1))
+    skeleton = generateSkeleton(form, level, seededRandom(seed + 2))
+  } else if (scars && scars.length > 0) {
+    seed = hashScars(scars)
+    primaryColor = getDominantColor(scars)
+    secondaryColor = getSecondaryColor(scars, primaryColor)
+    const form = pickForm(seededRandom(seed + 1))
+    skeleton = generateSkeleton(form, level, seededRandom(seed + 2))
+  } else {
+    return
+  }
+
   const rng = seededRandom(seed)
-
-  const primaryColor = getDominantColor(scars)
-  const secondaryColor = getSecondaryColor(scars, primaryColor)
-
-  const form = pickForm(seededRandom(seed + 1))
-  const skeleton = generateSkeleton(form, level, seededRandom(seed + 2))
   const { nodes, edges } = skeleton
 
   // Subtle idle animation — gentle floating motion per node
