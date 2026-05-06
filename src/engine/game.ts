@@ -202,7 +202,7 @@ export function tick(state: GameState, input: InputState): GameState {
       newState.lives = newState.lives - 1
       newState.invulnFrames = INVULN_FRAMES
       if (newState.lives <= 0) {
-        return { ...newState, status: 'dead' }
+        return { ...newState, status: 'hatching' }
       }
     }
   }
@@ -217,7 +217,7 @@ export function tick(state: GameState, input: InputState): GameState {
       newState.lives = newState.lives - 1
       newState.invulnFrames = INVULN_FRAMES
       if (newState.lives <= 0) {
-        return { ...newState, status: 'dead' }
+        return { ...newState, status: 'hatching' }
       }
     }
   }

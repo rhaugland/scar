@@ -96,4 +96,21 @@ describe('game', () => {
     expect(state.scars).toEqual([])
     expect(state.enemies).toEqual([])
   })
+
+  it('transitions to hatching when lives reach 0', () => {
+    let state = startGame(createGameState(0))
+    state = { ...state, lives: 1, invulnFrames: 0, lastTrailPos: { ...state.player.position } }
+    const dangerScar = createScar({ x: 60, y: 350 }, { x: 80, y: 350 })
+    const dummyScars = [
+      createScar({ x: 0, y: 0 }, { x: 1, y: 0 }),
+      createScar({ x: 0, y: 0 }, { x: 1, y: 0 }),
+      createScar({ x: 0, y: 0 }, { x: 1, y: 0 }),
+    ]
+    state = { ...state, scars: [dangerScar, ...dummyScars] }
+    for (let i = 0; i < 10; i++) {
+      state = tick(state, { moveX: 1, moveY: 0, dashDirection: null })
+      if (state.status !== 'playing') break
+    }
+    expect(state.status).toBe('hatching')
+  })
 })
