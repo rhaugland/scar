@@ -163,15 +163,7 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState): void {
 export function renderDeathScreen(ctx: CanvasRenderingContext2D, state: GameState): void {
   render(ctx, state)
 
+  // Dim overlay — score/kills shown by React DeathScreen component
   ctx.fillStyle = 'rgba(0, 0, 0, 0.4)'
   ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE)
-
-  ctx.font = 'bold 36px monospace'
-  ctx.textAlign = 'center'
-  ctx.fillStyle = '#ffffff'
-  ctx.fillText(`${state.score.toFixed(1)}s`, ARENA_CENTER.x, ARENA_CENTER.y - 20)
-
-  ctx.font = '18px monospace'
-  ctx.fillStyle = '#ffffff88'
-  ctx.fillText(`${state.kills} kills`, ARENA_CENTER.x, ARENA_CENTER.y + 15)
 }
